@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HG Command Center</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#09090d;--surface:#111118;--surface-2:#18181f;--surface-3:#1f1f28;
+  --border:#2a2a38;--border-light:#3a3a50;
+  --text:#e6e6f0;--text-muted:#6a6a85;--text-dim:#45455a;
+  --accent:#7c3aed;--accent-2:#6d28d9;--accent-light:#a78bfa;
+  --accent-glow:rgba(124,58,237,0.18);--accent-glow-s:rgba(124,58,237,0.35);
+  --success:#10b981;--warning:#f59e0b;--danger:#ef4444;
+  --school:#3b82f6;--consulting:#8b5cf6;--laurichem:#14b8a6;--personal:#6b7280;
+  --sidebar-w:68px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100vh}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border-light);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+#root{display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:4px;flex-shrink:0;z-index:100}
+.sb-logo{width:40px;height:40px;background:var(--accent-glow-s);border:1px solid var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:14px;cursor:pointer;user-select:none}
+.sb-item{width:46px;height:46px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:10px;cursor:pointer;transition:all .15s;color:var(--text-muted);border:none;background:none}
+.sb-item:hover{background:var(--surface-2);color:var(--text)}
+.sb-item.active{background:var(--accent-glow);color:var(--accent-light);box-shadow:inset 0 0 0 1px var(--accent)}
+.sb-item svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.sb-label{font-size:8.5px;letter-spacing:.04em;font-weight:700;text-transform:uppercase}
+.sb-spacer{flex:1}
+
+/* LOGIN */
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);background-image:radial-gradient(ellipse 60% 50% at 50% -10%,rgba(124,58,237,.18),transparent)}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px 36px;width:380px;box-shadow:0 0 60px rgba(124,58,237,.08)}
+.login-logo{width:52px;height:52px;background:var(--accent-glow-s);border:1px solid var(--accent);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 20px}
+.login-title{text-align:center;font-size:22px;font-weight:800;letter-spacing:-.04em;margin-bottom:4px}
+.login-sub{text-align:center;font-size:13px;color:var(--text-muted);margin-bottom:28px}
+.login-err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:16px}
+.login-gap{display:flex;flex-direction:column;gap:14px}
+.logout-btn{width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:9px;cursor:pointer;border:none;background:transparent;color:var(--text-dim);transition:all .15s;margin-top:4px}
+.logout-btn:hover{background:rgba(239,68,68,.12);color:var(--danger)}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.ph{padding:22px 26px 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.ph-left{}
+.ph-title{font-size:21px;font-weight:800;letter-spacing:-.035em}
+.ph-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+.pc{flex:1;overflow-y:auto;padding:18px 26px 28px}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px}
+.card-sm{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:inherit;letter-spacing:-.01em}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-2);box-shadow:0 0 18px var(--accent-glow-s)}
+.btn-ghost{background:transparent;color:var(--text-muted);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--surface-2);color:var(--text);border-color:var(--border-light)}
+.btn-danger{background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.3)}
+.btn-danger:hover{background:rgba(239,68,68,.2)}
+.btn-success{background:rgba(16,185,129,.1);color:var(--success);border:1px solid rgba(16,185,129,.3)}
+.btn-sm{padding:5px 10px;font-size:12px;border-radius:6px}
+.btn-xs{padding:3px 8px;font-size:11px;border-radius:5px}
+.btn-icon{padding:7px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border);color:var(--text-muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .15s;font-family:inherit}
+.btn-icon:hover{background:var(--surface-3);color:var(--text);border-color:var(--border-light)}
+.btn-icon svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* FORMS */
+.fg{display:flex;flex-direction:column;gap:5px}
+.flabel{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em}
+input,textarea,select{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;padding:9px 12px;transition:border-color .15s;outline:none;width:100%}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+select option{background:var(--surface-2)}
+textarea{resize:vertical;min-height:80px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.fgrid{display:grid;gap:14px}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.02em}
+.b-school{background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.3)}
+.b-consulting{background:rgba(139,92,246,.15);color:#c4b5fd;border:1px solid rgba(139,92,246,.3)}
+.b-laurichem{background:rgba(20,184,166,.15);color:#5eead4;border:1px solid rgba(20,184,166,.3)}
+.b-personal{background:rgba(107,114,128,.15);color:#9ca3af;border:1px solid rgba(107,114,128,.3)}
+.b-linkedin{background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.3)}
+.b-facebook{background:rgba(99,102,241,.15);color:#a5b4fc;border:1px solid rgba(99,102,241,.3)}
+.b-other{background:rgba(107,114,128,.15);color:#9ca3af;border:1px solid rgba(107,114,128,.3)}
+.b-low{background:rgba(107,114,128,.1);color:#9ca3af;border:1px solid rgba(107,114,128,.3)}
+.b-medium{background:rgba(245,158,11,.1);color:#fcd34d;border:1px solid rgba(245,158,11,.3)}
+.b-high{background:rgba(239,68,68,.1);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
+.b-urgent{background:rgba(220,38,38,.2);color:#f87171;border:1px solid rgba(220,38,38,.5)}
+.b-idea{background:rgba(107,114,128,.1);color:#9ca3af;border:1px solid rgba(107,114,128,.3)}
+.b-active{background:rgba(16,185,129,.1);color:#6ee7b7;border:1px solid rgba(16,185,129,.3)}
+.b-paused{background:rgba(245,158,11,.1);color:#fcd34d;border:1px solid rgba(245,158,11,.3)}
+.b-complete{background:rgba(124,58,237,.15);color:#c4b5fd;border:1px solid rgba(124,58,237,.3)}
+.b-note{background:rgba(107,114,128,.1);color:#9ca3af;border:1px solid rgba(107,114,128,.3)}
+.b-prompt{background:rgba(124,58,237,.15);color:#c4b5fd;border:1px solid rgba(124,58,237,.3)}
+.b-output{background:rgba(16,185,129,.1);color:#6ee7b7;border:1px solid rgba(16,185,129,.3)}
+.b-file{background:rgba(245,158,11,.1);color:#fcd34d;border:1px solid rgba(245,158,11,.3)}
+
+/* MODAL */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
+.md{background:var(--surface);border:1px solid var(--border-light);border-radius:16px;padding:24px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto}
+.md-wide{max-width:740px}
+.md-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.md-title{font-size:17px;font-weight:800;letter-spacing:-.02em}
+.md-close{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;line-height:1;padding:4px 6px;border-radius:6px;font-family:inherit}
+.md-close:hover{color:var(--text);background:var(--surface-2)}
+.md-ftr{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+
+/* TABS */
+.tab-bar{display:flex;gap:3px;background:var(--surface-2);border-radius:10px;padding:4px}
+.tab{padding:6px 13px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text-muted);transition:all .15s;border:none;background:none;font-family:inherit;letter-spacing:.01em}
+.tab.active{background:var(--surface-3);color:var(--text);box-shadow:inset 0 0 0 1px var(--border-light)}
+.tab:hover:not(.active){color:var(--text)}
+
+/* SEARCH */
+.search-wrap{display:flex;align-items:center;gap:10px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:8px 14px}
+.search-wrap input{background:none;border:none;padding:0;font-size:13px;flex:1}
+.search-wrap input:focus{box-shadow:none}
+
+/* TASK ITEM */
+.task-item{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;transition:all .15s}
+.task-item:hover{border-color:var(--border-light)}
+.task-chk{width:18px;height:18px;border-radius:50%;border:2px solid var(--border-light);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.task-chk:hover{border-color:var(--accent-light)}
+.task-chk.done{background:var(--success);border-color:var(--success)}
+.task-ttl{flex:1;font-size:13px;font-weight:500}
+.task-ttl.done{text-decoration:line-through;color:var(--text-muted)}
+.task-due{font-size:11px;color:var(--text-muted)}
+.task-due.overdue{color:var(--danger)}
+
+/* CONTACT */
+.contact-row{display:flex;align-items:center;gap:13px;padding:12px 16px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s}
+.contact-row:hover{border-color:var(--border-light);background:var(--surface-3)}
+.c-avatar{width:36px;height:36px;border-radius:50%;background:var(--accent-glow-s);border:1px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--accent-light);flex-shrink:0}
+
+/* CALENDAR */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-dh{text-align:center;font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;padding:8px 4px}
+.cal-day{min-height:82px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:6px;cursor:pointer;transition:all .15s}
+.cal-day:hover{border-color:var(--border-light);background:var(--surface-3)}
+.cal-day.today{border-color:var(--accent);background:var(--accent-glow)}
+.cal-day.other-m{opacity:.35}
+.cal-dn{font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:3px}
+.cal-day.today .cal-dn{color:var(--accent-light)}
+.cal-ev{font-size:9.5px;padding:2px 5px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+
+/* PROJECT CARD */
+.proj-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:15px;cursor:pointer;transition:all .15s}
+.proj-card:hover{border-color:var(--border-light);box-shadow:0 4px 20px rgba(0,0,0,.3);transform:translateY(-1px)}
+.proj-name{font-size:13px;font-weight:800;margin-bottom:5px;letter-spacing:-.01em}
+.proj-desc{font-size:12px;color:var(--text-muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* KANBAN */
+.kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:start}
+.kb-col{display:flex;flex-direction:column;gap:8px}
+.kb-hdr{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);padding:0 4px 8px;border-bottom:2px solid var(--border);margin-bottom:2px}
+
+/* VAULT ENTRY */
+.vault-entry{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:13px 15px;cursor:pointer;transition:all .15s}
+.vault-entry:hover{border-color:var(--border-light)}
+.ve-title{font-size:13px;font-weight:700;margin-bottom:4px}
+.ve-preview{font-size:12px;color:var(--text-muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* STATS */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;position:relative;overflow:hidden}
+.stat-card::after{content:'';position:absolute;bottom:-20px;right:-20px;width:80px;height:80px;background:var(--accent-glow);border-radius:50%}
+.stat-lbl{font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.stat-val{font-size:30px;font-weight:900;letter-spacing:-.04em;margin:4px 0}
+.stat-sub{font-size:11px;color:var(--text-muted)}
+
+/* LOG ENTRY */
+.log-entry{background:var(--surface-3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px}
+.log-meta{font-size:11px;color:var(--text-muted);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.log-content{font-size:13px;line-height:1.6;white-space:pre-wrap}
+
+/* MISC */
+.flex{display:flex}.flex-col{display:flex;flex-direction:column}
+.items-center{align-items:center}.justify-between{justify-content:space-between}
+.gap-6{gap:6px}.gap-8{gap:8px}.gap-10{gap:10px}.gap-12{gap:12px}.gap-14{gap:14px}.gap-16{gap:16px}.gap-20{gap:20px}
+.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mt-16{margin-top:16px}.mt-20{margin-top:20px}
+.text-muted{color:var(--text-muted)}.text-sm{font-size:12px}.text-xs{font-size:11px}.font-bold{font-weight:700}.font-black{font-weight:900}
+.w-full{width:100%}.flex-1{flex:1}
+.empty-state{text-align:center;padding:48px 20px;color:var(--text-muted)}
+.empty-icon{font-size:40px;margin-bottom:12px}
+.empty-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px}
+.sec-title{font-size:11px;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.divider{height:1px;background:var(--border);margin:16px 0}
+.stack{display:flex;flex-direction:column;gap:8px}
+
+/* NOTIFICATION */
+.notif{position:fixed;bottom:20px;right:20px;background:var(--surface-3);border:1px solid var(--border-light);border-radius:10px;padding:12px 18px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 24px rgba(0,0,0,.5);display:flex;align-items:center;gap:8px;animation:slideIn .2s ease}
+@keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* QUICK SAVE BUTTON */
+.qs-btn{position:fixed;bottom:20px;left:calc(var(--sidebar-w) + 20px);z-index:500;background:var(--accent);color:#fff;border:none;border-radius:50px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px;box-shadow:0 4px 20px var(--accent-glow-s);transition:all .15s;font-family:inherit}
+.qs-btn:hover{background:var(--accent-2);transform:translateY(-1px);box-shadow:0 6px 24px var(--accent-glow-s)}
+
+/* DETAIL PANEL */
+.detail-panel{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-top:16px}
+.dp-field{margin-bottom:12px}
+.dp-label{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.dp-value{font-size:13px;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useMemo, useRef } = React;
+const { createClient } = supabase;
+const db = createClient(
+  'https://esezgdxpmjxxwfoptias.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzZXpnZHhwbWp4eHdmb3B0aWFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxODcwODIsImV4cCI6MjA4OTc2MzA4Mn0.WO6mIvP1p3pVUPnUtqhjw6UJAeIpsVONdEEUStKxWA0'
+);
+
+// ─── UTILS ─────────────────────────────────────────────
+const fmtDate = (d) => { if (!d) return '—'; const dt = new Date(d + 'T00:00:00'); return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); };
+const fmtDateTime = (d) => { if (!d) return '—'; return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); };
+const isOverdue = (d) => { if (!d) return false; return new Date(d) < new Date(new Date().toDateString()); };
+const initials = (n) => { if (!n) return '?'; return n.split(' ').filter(Boolean).map(w => w[0]).join('').slice(0,2).toUpperCase(); };
+const today = () => new Date().toISOString().slice(0, 10);
+const ctxColors = { school:'#3b82f6', consulting:'#8b5cf6', laurichem:'#14b8a6', personal:'#6b7280' };
+const ctxLabel = { school:'School', consulting:'Consulting', laurichem:'2M Laurichem', personal:'Personal' };
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+// ─── ICONS ─────────────────────────────────────────────
+const Icon = ({ name, size = 18 }) => {
+  const paths = {
+    home: <><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>,
+    users: <><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></>,
+    check: <><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></>,
+    cal: <><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,
+    grid: <><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></>,
+    lock: <><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></>,
+    plus: <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>,
+    search: <><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,
+    trash: <><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></>,
+    edit: <><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></>,
+    download: <><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>,
+    save: <><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></>,
+    log: <><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>,
+    chevL: <polyline points="15 18 9 12 15 6"/>,
+    chevR: <polyline points="9 18 15 12 9 6"/>,
+    x: <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,
+    link: <><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></>,
+    star: <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>,
+  };
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
+};
+
+// ─── NOTIFICATION ───────────────────────────────────────
+const Notif = ({ msg, type }) => (
+  <div className="notif" style={{ borderColor: type==='error' ? 'rgba(239,68,68,.4)' : type==='success' ? 'rgba(16,185,129,.4)' : 'var(--border-light)', color: type==='error' ? 'var(--danger)' : type==='success' ? 'var(--success)' : 'var(--text)' }}>
+    {type==='success' ? '✓' : type==='error' ? '✕' : 'ℹ'} {msg}
+  </div>
+);
+
+// ─── MODAL ─────────────────────────────────────────────
+const Modal = ({ title, onClose, children, wide, footer }) => (
+  <div className="mo" onClick={e => e.target===e.currentTarget && onClose()}>
+    <div className={`md ${wide ? 'md-wide' : ''}`}>
+      <div className="md-hdr">
+        <span className="md-title">{title}</span>
+        <button className="md-close" onClick={onClose}>✕</button>
+      </div>
+      {children}
+      {footer && <div className="md-ftr">{footer}</div>}
+    </div>
+  </div>
+);
+
+// ─── SIDEBAR ───────────────────────────────────────────
+const Sidebar = ({ view, setView, onLogout }) => {
+  const items = [
+    { id:'home', icon:'home', label:'Home' },
+    { id:'crm', icon:'users', label:'CRM' },
+    { id:'work', icon:'check', label:'Tasks' },
+    { id:'calendar', icon:'cal', label:'Cal' },
+    { id:'projects', icon:'grid', label:'Projects' },
+    { id:'vault', icon:'lock', label:'Vault' },
+  ];
+  return (
+    <div className="sidebar">
+      <div className="sb-logo" title="HG Command Center">⚡</div>
+      {items.map(it => (
+        <button key={it.id} className={`sb-item ${view===it.id?'active':''}`} onClick={() => setView(it.id)} title={it.label}>
+          <Icon name={it.icon} size={19} />
+          <span className="sb-label">{it.label}</span>
+        </button>
+      ))}
+      <div className="sb-spacer" />
+      <button className="logout-btn" onClick={onLogout} title="Sign out">
+        <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
+    </div>
+  );
+};
+
+// ─── HOME VIEW ─────────────────────────────────────────
+const HomeView = ({ notify, setView }) => {
+  const [stats, setStats] = useState({ contacts:0, tasks:0, projects:0, events:0 });
+  const [todayTasks, setTodayTasks] = useState([]);
+  const [upcoming, setUpcoming] = useState([]);
+  const [activeProjects, setActiveProjects] = useState([]);
+
+  useEffect(() => {
+    const load = async () => {
+      const todayStr = today();
+      const nextWeek = new Date(); nextWeek.setDate(nextWeek.getDate()+7);
+      const [c, t, p, e, tt, up, ap] = await Promise.all([
+        db.from('contacts').select('id', { count:'exact', head:true }),
+        db.from('tasks').select('id', { count:'exact', head:true }).eq('completed', false),
+        db.from('projects').select('id', { count:'exact', head:true }),
+        db.from('calendar_events').select('id', { count:'exact', head:true }).gte('start_time', new Date().toISOString()).lte('start_time', nextWeek.toISOString()),
+        db.from('tasks').select('*').eq('completed', false).eq('due_date', todayStr).order('priority'),
+        db.from('calendar_events').select('*').gte('start_time', new Date().toISOString()).lte('start_time', nextWeek.toISOString()).order('start_time').limit(5),
+        db.from('projects').select('*').eq('status','active').order('updated_at', { ascending:false }).limit(4),
+      ]);
+      setStats({ contacts: c.count||0, tasks: t.count||0, projects: p.count||0, events: e.count||0 });
+      setTodayTasks(tt.data||[]);
+      setUpcoming(up.data||[]);
+      setActiveProjects(ap.data||[]);
+    };
+    load();
+  }, []);
+
+  const complete = async (id) => {
+    await db.from('tasks').update({ completed:true, completed_at:new Date().toISOString() }).eq('id', id);
+    setTodayTasks(prev => prev.filter(t => t.id !== id));
+    setStats(s => ({ ...s, tasks: Math.max(0, s.tasks-1) }));
+    notify('Task done!', 'success');
+  };
+
+  return (
+    <div className="main">
+      <div className="ph">
+        <div className="ph-left">
+          <div className="ph-title">Good {new Date().getHours()<12?'morning':new Date().getHours()<17?'afternoon':'evening'}, Harrison ⚡</div>
+          <div className="ph-sub">{new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</div>
+        </div>
+      </div>
+      <div className="pc">
+        <div className="stat-grid">
+          {[
+            { label:'Contacts', val:stats.contacts, sub:'in your network', icon:'👥' },
+            { label:'Open Tasks', val:stats.tasks, sub:'need attention', icon:'📋' },
+            { label:'Projects', val:stats.projects, sub:'total tracked', icon:'🚀' },
+            { label:'Events This Week', val:stats.events, sub:'coming up', icon:'📅' },
+          ].map(s => (
+            <div key={s.label} className="stat-card">
+              <div className="stat-lbl">{s.icon} {s.label}</div>
+              <div className="stat-val" style={{ color:'var(--accent-light)' }}>{s.val}</div>
+              <div className="stat-sub">{s.sub}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid2" style={{ gap:16 }}>
+          <div>
+            <div className="sec-title">Due Today</div>
+            <div className="stack">
+              {todayTasks.length === 0 && <div className="card-sm text-muted text-sm" style={{ textAlign:'center', padding:'20px' }}>🎉 All clear for today</div>}
+              {todayTasks.map(t => (
+                <div key={t.id} className="task-item">
+                  <div className={`task-chk ${t.completed?'done':''}`} onClick={() => complete(t.id)}>
+                    {t.completed && <span style={{ color:'#fff', fontSize:10, fontWeight:900 }}>✓</span>}
+                  </div>
+                  <div className="task-ttl flex-1">{t.title}</div>
+                  <span className={`badge b-${t.context||'personal'}`}>{ctxLabel[t.context]||t.context}</span>
+                  <span className={`badge b-${t.priority||'medium'}`}>{t.priority}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div className="sec-title">Upcoming Events</div>
+            <div className="stack">
+              {upcoming.length === 0 && <div className="card-sm text-muted text-sm" style={{ textAlign:'center', padding:'20px' }}>No events this week</div>}
+              {upcoming.map(ev => (
+                <div key={ev.id} className="card-sm">
+                  <div className="flex items-center gap-8">
+                    <div style={{ width:4, height:36, borderRadius:2, background: ctxColors[ev.context]||'var(--accent)', flexShrink:0 }} />
+                    <div className="flex-1">
+                      <div style={{ fontSize:13, fontWeight:700 }}>{ev.title}</div>
+                      <div className="text-xs text-muted mt-8" style={{ marginTop:3 }}>{fmtDateTime(ev.start_time)}</div>
+                    </div>
+                    <span className={`badge b-${ev.context||'personal'}`}>{ctxLabel[ev.context]||ev.context}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-20">
+          <div className="sec-title">Active Projects</div>
+          <div className="grid2" style={{ gap:12 }}>
+            {activeProjects.length === 0 && <div className="card-sm text-muted text-sm" style={{ textAlign:'center', padding:'20px', gridColumn:'1/-1' }}>No active projects — start one in Projects</div>}
+            {activeProjects.map(p => (
+              <div key={p.id} className="proj-card" onClick={() => setView('projects')}>
+                <div className="flex items-center justify-between">
+                  <span className="proj-name">{p.name}</span>
+                  <span className="badge b-active">Active</span>
+                </div>
+                {p.description && <div className="proj-desc">{p.description}</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── CRM VIEW ──────────────────────────────────────────
+const CONTACT_DEFAULTS = { name:'', email_1:'', email_2:'', phone_1:'', phone_2:'', address_1:'', address_2:'', linkedin_url:'', facebook_url:'', source:'other', education:'', job:'', likes:'', dislikes:'', misc:'' };
+
+const CRMView = ({ notify }) => {
+  const [contacts, setContacts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [q, setQ] = useState('');
+  const [src, setSrc] = useState('all');
+  const [modal, setModal] = useState(null); // null | 'add' | {contact}
+  const [form, setForm] = useState(CONTACT_DEFAULTS);
+  const [detail, setDetail] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const { data } = await db.from('contacts').select('*').order('name');
+    setContacts(data||[]);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const filtered = useMemo(() => contacts.filter(c => {
+    const matchQ = !q || c.name?.toLowerCase().includes(q.toLowerCase()) || c.email_1?.toLowerCase().includes(q.toLowerCase()) || c.job?.toLowerCase().includes(q.toLowerCase());
+    const matchSrc = src==='all' || c.source===src;
+    return matchQ && matchSrc;
+  }), [contacts, q, src]);
+
+  const openAdd = () => { setForm(CONTACT_DEFAULTS); setModal('add'); };
+  const openEdit = (c) => { setForm(c); setModal(c); };
+
+  const save = async () => {
+    if (!form.name.trim()) { notify('Name is required', 'error'); return; }
+    setSaving(true);
+    if (modal === 'add') {
+      const { error } = await db.from('contacts').insert([{ ...form }]);
+      if (error) { notify('Error saving contact', 'error'); } else { notify('Contact added!', 'success'); }
+    } else {
+      const { error } = await db.from('contacts').update({ ...form, updated_at:new Date().toISOString() }).eq('id', form.id);
+      if (error) { notify('Error updating contact', 'error'); } else { notify('Contact updated!', 'success'); }
+    }
+    setSaving(false);
+    setModal(null);
+    setDetail(null);
+    load();
+  };
+
+  const del = async (id) => {
+    if (!confirm('Delete this contact?')) return;
+    await db.from('contacts').delete().eq('id', id);
+    setDetail(null);
+    notify('Contact deleted', 'success');
+    load();
+  };
+
+  const F = ({ label, field, type='text', span }) => (
+    <div className="fg" style={span ? { gridColumn:'1/-1' } : {}}>
+      <label className="flabel">{label}</label>
+      <input type={type} value={form[field]||''} onChange={e => setForm(f => ({...f, [field]:e.target.value}))} />
+    </div>
+  );
+
+  return (
+    <div className="main">
+      <div className="ph">
+        <div>
+          <div className="ph-title">CRM</div>
+          <div className="ph-sub">{contacts.length} contacts · {filtered.length} shown</div>
+        </div>
+        <button className="btn btn-primary" onClick={openAdd}><Icon name="plus" size={15} /> Add Contact</button>
+      </div>
+      <div className="pc">
+        <div className="flex items-center gap-12 mt-8" style={{ marginBottom:14 }}>
+          <div className="search-wrap flex-1">
+            <Icon name="search" size={15} />
+            <input placeholder="Search by name, email, job…" value={q} onChange={e => setQ(e.target.value)} />
+          </div>
+          <div className="tab-bar">
+            {['all','linkedin','facebook','other'].map(s => (
+              <button key={s} className={`tab ${src===s?'active':''}`} onClick={() => setSrc(s)}>
+                {s==='all'?'All':s.charAt(0).toUpperCase()+s.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {loading && <div className="empty-state"><div>Loading contacts…</div></div>}
+        {!loading && filtered.length === 0 && (
+          <div className="empty-state">
+            <div className="empty-icon">👥</div>
+            <div className="empty-title">{q || src!=='all' ? 'No matches found' : 'No contacts yet'}</div>
+            <div className="text-muted text-sm">{q||src!=='all' ? 'Try a different search' : 'Add your first contact to get started'}</div>
+          </div>
+        )}
+        <div className="stack">
+          {filtered.map(c => (
+            <div key={c.id} className="contact-row" onClick={() => setDetail(detail?.id===c.id?null:c)}>
+              <div className="c-avatar">{initials(c.name)}</div>
+              <div className="flex-1">
+                <div style={{ fontSize:14, fontWeight:700 }}>{c.name}</div>
+                <div className="text-sm text-muted">{[c.job, c.email_1].filter(Boolean).join(' · ')}</div>
+              </div>
+              <span className={`badge b-${c.source||'other'}`}>{c.source||'other'}</span>
+              {c.linkedin_url && <a href={c.linkedin_url} target="_blank" onClick={e=>e.stopPropagation()} style={{ color:'var(--school)', lineHeight:0 }}><Icon name="link" size={14} /></a>}
+            </div>
+          ))}
+        </div>
+
+        {detail && (
+          <div className="detail-panel mt-16">
+            <div className="flex items-center justify-between" style={{ marginBottom:16 }}>
+              <div className="flex items-center gap-12">
+                <div className="c-avatar" style={{ width:48, height:48, fontSize:18 }}>{initials(detail.name)}</div>
+                <div>
+                  <div style={{ fontSize:18, fontWeight:800 }}>{detail.name}</div>
+                  <div className="text-sm text-muted">{detail.job||'—'}</div>
+                </div>
+              </div>
+              <div className="flex gap-8">
+                <button className="btn btn-ghost btn-sm" onClick={() => openEdit(detail)}><Icon name="edit" size={13} /> Edit</button>
+                <button className="btn btn-danger btn-sm" onClick={() => del(detail.id)}><Icon name="trash" size={13} /> Delete</button>
+              </div>
+            </div>
+            <div className="grid3" style={{ gap:12 }}>
+              {[
+                ['Email 1', detail.email_1], ['Email 2', detail.email_2],
+                ['Phone 1', detail.phone_1], ['Phone 2', detail.phone_2],
+                ['Address 1', detail.address_1], ['Address 2', detail.address_2],
+                ['LinkedIn', detail.linkedin_url], ['Facebook', detail.facebook_url],
+                ['Education', detail.education], ['Job', detail.job],
+                ['Likes', detail.likes], ['Dislikes', detail.dislikes],
+              ].map(([l,v]) => v ? (
+                <div key={l} className="dp-field">
+                  <div className="dp-label">{l}</div>
+                  <div className="dp-value">{l.includes('URL')||l.includes('inked')||l.includes('book') ? <a href={v} target="_blank" style={{ color:'var(--accent-light)' }}>{v}</a> : v}</div>
+                </div>
+              ) : null)}
+            </div>
+            {detail.misc && <div className="dp-field mt-12"><div className="dp-label">Notes</div><div className="dp-value" style={{ whiteSpace:'pre-wrap' }}>{detail.misc}</div></div>}
+          </div>
+        )}
+      </div>
+
+      {modal && (
+        <Modal title={modal==='add' ? 'Add Contact' : 'Edit Contact'} onClose={() => setModal(null)} wide
+          footer={<><button className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button><button className="btn btn-primary" onClick={save} disabled={saving}>{saving?'Saving…':'Save Contact'}</button></>}>
+          <div className="fgrid">
+            <F label="Full Name *" field="name" span />
+            <div className="grid2">
+              <div className="fg">
+                <label className="flabel">Source</label>
+                <select value={form.source||'other'} onChange={e => setForm(f => ({...f, source:e.target.value}))}>
+                  <option value="linkedin">LinkedIn</option>
+                  <option value="facebook">Facebook</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <F label="Job / Title" field="job" />
+            </div>
+            <div className="grid2"><F label="Email 1" field="email_1" type="email" /><F label="Email 2" field="email_2" type="email" /></div>
+            <div className="grid2"><F label="Phone 1" field="phone_1" /><F label="Phone 2" field="phone_2" /></div>
+            <F label="Address 1" field="address_1" span />
+            <F label="Address 2" field="address_2" span />
+            <div className="grid2"><F label="LinkedIn URL" field="linkedin_url" /><F label="Facebook URL" field="facebook_url" /></div>
+            <F label="Education" field="education" span />
+            <div className="grid2"><F label="Likes" field="likes" /><F label="Dislikes" field="dislikes" /></div>
+            <div className="fg">
+              <label className="flabel">Misc Notes</label>
+              <textarea value={form.misc||''} onChange={e => setForm(f => ({...f, misc:e.target.value}))} placeholder="Anything else worth noting…" />
+            </div>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+};
+
+// ─── WORK HUB VIEW ─────────────────────────────────────
+const TASK_DEFAULTS = { title:'', description:'', due_date:'', priority:'medium', context:'school', class_name:'', completed:false };
+const CONTEXTS = [
+  { id:'all', label:'All Tasks' },
+  { id:'school', label:'School' },
+  { id:'consulting', label:'Consulting' },
+  { id:'laurichem', label:'2M Laurichem' },
+  { id:'personal', label:'Personal' },
+];
+
+const WorkHubView = ({ notify }) => {
+  const [tasks, setTasks] = useState([]);
+  const [ctx, setCtx] = useState('all');
+  const [showDone, setShowDone] = useState(false);
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState(TASK_DEFAULTS);
+  const [quick, setQuick] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    const { data } = await db.from('tasks').select('*').order('completed').order('due_date', { ascending:true, nullsFirst:false }).order('priority');
+    setTasks(data||[]);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const filtered = useMemo(() => tasks.filter(t => {
+    const matchCtx = ctx==='all' || t.context===ctx;
+    const matchDone = showDone || !t.completed;
+    return matchCtx && matchDone;
+  }), [tasks, ctx, showDone]);
+
+  const toggle = async (t) => {
+    const done = !t.completed;
+    await db.from('tasks').update({ completed:done, completed_at:done?new Date().toISOString():null, updated_at:new Date().toISOString() }).eq('id', t.id);
+    notify(done ? 'Task completed! ✓' : 'Task reopened', done?'success':'info');
+    load();
+  };
+
+  const del = async (id) => {
+    await db.from('tasks').delete().eq('id', id);
+    notify('Task deleted', 'success');
+    load();
+  };
+
+  const quickAdd = async (e) => {
+    e.preventDefault();
+    if (!quick.trim()) return;
+    await db.from('tasks').insert([{ title:quick.trim(), context: ctx!=='all'?ctx:'personal', priority:'medium', due_date:today() }]);
+    setQuick('');
+    notify('Task added!', 'success');
+    load();
+  };
+
+  const save = async () => {
+    if (!form.title.trim()) { notify('Title required', 'error'); return; }
+    setSaving(true);
+    if (!form.id) {
+      await db.from('tasks').insert([{ ...form }]);
+      notify('Task added!', 'success');
+    } else {
+      await db.from('tasks').update({ ...form, updated_at:new Date().toISOString() }).eq('id', form.id);
+      notify('Task updated!', 'success');
+    }
+    setSaving(false);
+    setModal(null);
+    load();
+  };
+
+  const priorityOrder = { urgent:0, high:1, medium:2, low:3 };
+
+  return (
+    <div className="main">
+      <div className="ph">
+        <div>
+          <div className="ph-title">Work Hub</div>
+          <div className="ph-sub">{filtered.filter(t=>!t.completed).length} open · {filtered.filter(t=>t.completed).length} done</div>
+        </div>
+        <div className="flex gap-8">
+          <button className="btn btn-ghost btn-sm" onClick={() => setShowDone(s=>!s)}>{showDone ? 'Hide Done' : 'Show Done'}</button>
+          <button className="btn btn-primary" onClick={() => { setForm({...TASK_DEFAULTS, context:ctx!=='all'?ctx:'school'}); setModal('add'); }}>
+            <Icon name="plus" size={15} /> Add Task
+          </button>
+        </div>
+      </div>
+      <div className="pc">
+        <div className="tab-bar" style={{ marginBottom:14 }}>
+          {CONTEXTS.map(c => (
+            <button key={c.id} className={`tab ${ctx===c.id?'active':''}`} onClick={() => setCtx(c.id)}>{c.label}</button>
+          ))}
+        </div>
+
+        <form className="flex gap-8" style={{ marginBottom:16 }} onSubmit={quickAdd}>
+          <input style={{ flex:1 }} placeholder={`Quick add to ${ctx==='all'?'tasks':ctxLabel[ctx]}… (press Enter)`} value={quick} onChange={e => setQuick(e.target.value)} />
+          <button type="submit" className="btn btn-primary btn-sm">Add</button>
+        </form>
+
+        {filtered.length === 0 && (
+          <div className="empty-state">
+            <div className="empty-icon">✅</div>
+            <div className="empty-title">All clear{ctx!=='all'?' in '+ctxLabel[ctx]:''}!</div>
+            <div className="text-muted text-sm">Add a task above to get started</div>
+          </div>
+        )}
+
+        <div className="stack">
+          {[...filtered].sort((a,b) => {
+            if (a.completed !== b.completed) return a.completed ? 1 : -1;
+            return (priorityOrder[a.priority]??2) - (priorityOrder[b.priority]??2);
+          }).map(t => (
+            <div key={t.id} className="task-item" style={{ opacity: t.completed ? .6 : 1 }}>
+              <div className={`task-chk ${t.completed?'done':''}`} onClick={() => toggle(t)}>
+                {t.completed && <span style={{ color:'#fff', fontSize:9, fontWeight:900 }}>✓</span>}
+              </div>
+              <div className="flex-col flex-1" style={{ gap:3 }}>
+                <div className={`task-ttl ${t.completed?'done':''}`}>{t.title}</div>
+                {t.class_name && <div className="text-xs text-muted">{t.class_name}</div>}
+                {t.description && <div className="text-xs text-muted">{t.description}</div>}
+              </div>
+              <div className="flex items-center gap-8">
+                {t.due_date && <span className={`task-due ${isOverdue(t.due_date)&&!t.completed?'overdue':''}`}>{fmtDate(t.due_date)}</span>}
+                <span className={`badge b-${t.context||'personal'}`}>{ctxLabel[t.context]||t.context}</span>
+                <span className={`badge b-${t.priority||'medium'}`}>{t.priority}</span>
+                <button className="btn-icon" onClick={() => { setForm(t); setModal('edit'); }}><Icon name="edit" /></button>
+                <button className="btn-icon" onClick={() => del(t.id)}><Icon name="trash" /></button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {modal && (
+        <Modal title={modal==='add'?'Add Task':'Edit Task'} onClose={() => setModal(null)}
+          footer={<><button className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button><button className="btn btn-primary" onClick={save} disabled={saving}>{saving?'Saving…':'Save Task'}</button></>}>
+          <div className="fgrid">
+            <div className="fg"><label className="flabel">Title *</label><input value={form.title} onChange={e => setForm(f=>({...f,title:e.target.value}))} placeholder="What needs to get done?" /></div>
+            <div className="grid2">
+              <div className="fg">
+                <label className="flabel">Context</label>
+                <select value={form.context} onChange={e => setForm(f=>({...f,context:e.target.value}))}>
+                  <option value="school">School</option>
+                  <option value="consulting">Consulting</option>
+                  <option value="laurichem">2M Laurichem</option>
+                  <option value="personal">Personal</option>
+                </select>
+              </div>
+              <div className="fg">
+                <label className="flabel">Priority</label>
+                <select value={form.priority} onChange={e => setForm(f=>({...f,priority:e.target.value}))}>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid2">
+              <div className="fg"><label className="flabel">Due Date</label><input type="date" value={form.due_date||''} onChange={e => setForm(f=>({...f,due_date:e.target.value}))} /></div>
+              <div className="fg"><label className="flabel">Class / Sub-context</label><input value={form.class_name||''} onChange={e => setForm(f=>({...f,class_name:e.target.value}))} placeholder="e.g. BUS 301" /></div>
+            </div>
+            <div className="fg"><label className="flabel">Description</label><textarea value={form.description||''} onChange={e => setForm(f=>({...f,description:e.target.value}))} placeholder="Any extra details…" style={{ minHeight:60 }} /></div>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+};
+
+// ─── CALENDAR VIEW ─────────────────────────────────────
+const EV_DEFAULTS = { title:'', start_time:'', end_time:'', all_day:false, context:'personal', notes:'' };
+
+const CalendarView = ({ notify }) => {
+  const [events, setEvents] = useState([]);
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [month, setMonth] = useState(new Date().getMonth());
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState(EV_DEFAULTS);
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    const start = new Date(year, month, 1).toISOString();
+    const end = new Date(year, month+1, 1).toISOString();
+    const { data } = await db.from('calendar_events').select('*').gte('start_time', start).lt('start_time', end).order('start_time');
+    setEvents(data||[]);
+  }, [year, month]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const days = useMemo(() => {
+    const first = new Date(year, month, 1);
+    const last = new Date(year, month+1, 0);
+    const cells = [];
+    for (let i=0; i<first.getDay(); i++) {
+      const d = new Date(year, month, -first.getDay()+i+1);
+      cells.push({ date:d, thisMonth:false });
+    }
+    for (let d=1; d<=last.getDate(); d++) cells.push({ date:new Date(year,month,d), thisMonth:true });
+    while (cells.length % 7 !== 0) { const last2 = cells[cells.length-1].date; cells.push({ date:new Date(last2.getFullYear(),last2.getMonth(),last2.getDate()+1), thisMonth:false }); }
+    return cells;
+  }, [year, month]);
+
+  const evsByDay = useMemo(() => {
+    const map = {};
+    events.forEach(ev => {
+      const key = new Date(ev.start_time).toDateString();
+      if (!map[key]) map[key] = [];
+      map[key].push(ev);
+    });
+    return map;
+  }, [events]);
+
+  const save = async () => {
+    if (!form.title.trim() || !form.start_time) { notify('Title and start time required', 'error'); return; }
+    setSaving(true);
+    if (!form.id) {
+      await db.from('calendar_events').insert([{ ...form }]);
+      notify('Event added!', 'success');
+    } else {
+      await db.from('calendar_events').update({ ...form }).eq('id', form.id);
+      notify('Event updated!', 'success');
+    }
+    setSaving(false);
+    setModal(null);
+    load();
+  };
+
+  const del = async (id) => {
+    await db.from('calendar_events').delete().eq('id', id);
+    notify('Event deleted', 'success');
+    load();
+  };
+
+  const exportICS = async () => {
+    const { data } = await db.from('calendar_events').select('*').order('start_time');
+    if (!data?.length) { notify('No events to export', 'error'); return; }
+    const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//HG Command Center//EN','CALSCALE:GREGORIAN'];
+    data.forEach(ev => {
+      const fmt = (d) => new Date(d).toISOString().replace(/[-:]/g,'').replace('.000','');
+      lines.push('BEGIN:VEVENT', `UID:${ev.ics_uid||ev.id}@hg`, `DTSTART:${fmt(ev.start_time)}`, `DTEND:${fmt(ev.end_time||ev.start_time)}`, `SUMMARY:${ev.title}`, ev.notes?`DESCRIPTION:${ev.notes}`:'', 'END:VEVENT');
+    });
+    lines.push('END:VCALENDAR');
+    const blob = new Blob([lines.filter(Boolean).join('\r\n')], { type:'text/calendar' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'hg-calendar.ics'; a.click();
+    notify('Calendar exported! Import into Apple Calendar.', 'success');
+  };
+
+  const todayStr = new Date().toDateString();
+
+  return (
+    <div className="main">
+      <div className="ph">
+        <div>
+          <div className="flex items-center gap-12">
+            <button className="btn-icon" onClick={() => { if (month===0){setMonth(11);setYear(y=>y-1);}else setMonth(m=>m-1); }}><Icon name="chevL" /></button>
+            <div className="ph-title">{MONTHS[month]} {year}</div>
+            <button className="btn-icon" onClick={() => { if (month===11){setMonth(0);setYear(y=>y+1);}else setMonth(m=>m+1); }}><Icon name="chevR" /></button>
+          </div>
+          <div className="ph-sub">{events.length} events this month</div>
+        </div>
+        <div className="flex gap-8">
+          <button className="btn btn-ghost btn-sm" onClick={exportICS}><Icon name="download" size={14} /> Export .ics</button>
+          <button className="btn btn-primary" onClick={() => { setForm({...EV_DEFAULTS, start_time:new Date().toISOString().slice(0,16)}); setModal('add'); }}>
+            <Icon name="plus" size={15} /> Add Event
+          </button>
+        </div>
+      </div>
+      <div className="pc">
+        <div style={{ background:'rgba(124,58,237,.06)', border:'1px solid rgba(124,58,237,.2)', borderRadius:8, padding:'8px 14px', marginBottom:14, fontSize:12, color:'var(--text-muted)' }}>
+          💡 Export your events as .ics and import into Apple Calendar. For live sync, open Apple Calendar → File → New Calendar Subscription and host this dashboard with a server-side ICS endpoint.
+        </div>
+        <div className="cal-grid" style={{ marginBottom:4 }}>
+          {DAYS.map(d => <div key={d} className="cal-dh">{d}</div>)}
+        </div>
+        <div className="cal-grid">
+          {days.map((cell, i) => {
+            const key = cell.date.toDateString();
+            const dayEvs = evsByDay[key]||[];
+            const isToday = key === todayStr;
+            return (
+              <div key={i} className={`cal-day ${isToday?'today':''} ${cell.thisMonth?'':'other-m'}`}
+                onClick={() => { setForm({...EV_DEFAULTS, start_time:`${cell.date.toISOString().slice(0,10)}T09:00`}); setModal('add'); }}>
+                <div className="cal-dn">{cell.date.getDate()}</div>
+                {dayEvs.slice(0,3).map(ev => (
+                  <div key={ev.id} className="cal-ev" style={{ background: (ctxColors[ev.context]||'var(--accent)')+'22', color: ctxColors[ev.context]||'var(--accent-light)' }}
+                    onClick={e => { e.stopPropagation(); setForm(ev); setModal('edit'); }}>
+                    {ev.title}
+                  </div>
+                ))}
+                {dayEvs.length > 3 && <div style={{ fontSize:9, color:'var(--text-muted)', fontWeight:700 }}>+{dayEvs.length-3} more</div>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {modal && (
+        <Modal title={modal==='add'?'Add Event':'Edit Event'} onClose={() => setModal(null)}
+          footer={
+            <div className="flex justify-between w-full">
+              <div>{modal!=='add' && <button className="btn btn-danger btn-sm" onClick={() => { del(form.id); setModal(null); }}>Delete</button>}</div>
+              <div className="flex gap-8"><button className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button><button className="btn btn-primary" onClick={save} disabled={saving}>{saving?'Saving…':'Save'}</button></div>
+            </div>
+          }>
+          <div className="fgrid">
+            <div className="fg"><label className="flabel">Event Title *</label><input value={form.title||''} onChange={e => setForm(f=>({...f,title:e.target.value}))} placeholder="What's happening?" /></div>
+            <div className="grid2">
+              <div className="fg"><label className="flabel">Start</label><input type="datetime-local" value={form.start_time?.slice(0,16)||''} onChange={e => setForm(f=>({...f,start_time:e.target.value}))} /></div>
+              <div className="fg"><label className="flabel">End</label><input type="datetime-local" value={form.end_time?.slice(0,16)||''} onChange={e => setForm(f=>({...f,end_time:e.target.value}))} /></div>
+            </div>
+            <div className="fg">
+              <label className="flabel">Context</label>
+              <select value={form.context||'personal'} onChange={e => setForm(f=>({...f,context:e.target.value}))}>
+                <option value="school">School</option><option value="consulting">Consulting</option>
+                <option value="laurichem">2M Laurichem</option><option value="personal">Personal</option>
+              </select>
+            </div>
+            <div className="fg"><label className="flabel">Notes</label><textarea value={form.notes||''} onChange={e => setForm(f=>({...f,notes:e.target.value}))} style={{ minHeight:60 }} /></div>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+};
+
+// ─── PROJECTS VIEW ─────────────────────────────────────
+const PROJ_DEFAULTS = { name:'', description:'', status:'idea', notes:'', tags:[] };
+const STATUSES = ['idea','active','paused','complete'];
+
+const ProjectsView = ({ notify }) => {
+  const [projects, setProjects] = useState([]);
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState(PROJ_DEFAULTS);
+  const [detail, setDetail] = useState(null);
+  const [logs, setLogs] = useState([]);
+  const [logText, setLogText] = useState('');
+  const [logType, setLogType] = useState('note');
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    const { data } = await db.from('projects').select('*').order('updated_at', { ascending:false });
+    setProjects(data||[]);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const loadLogs = async (projectId) => {
+    const { data } = await db.from('project_logs').select('*').eq('project_id', projectId).order('created_at', { ascending:false });
+    setLogs(data||[]);
+  };
+
+  const openDetail = async (p) => {
+    setDetail(p);
+    await loadLogs(p.id);
+  };
+
+  const save = async () => {
+    if (!form.name.trim()) { notify('Project name required', 'error'); return; }
+    setSaving(true);
+    if (!form.id) {
+      await db.from('projects').insert([{ name:form.name, description:form.description, status:form.status, notes:form.notes }]);
+      notify('Project created!', 'success');
+    } else {
+      await db.from('projects').update({ name:form.name, description:form.description, status:form.status, notes:form.notes, updated_at:new Date().toISOString() }).eq('id', form.id);
+      notify('Project updated!', 'success');
+      if (detail?.id === form.id) setDetail(p => ({...p, ...form}));
+    }
+    setSaving(false);
+    setModal(null);
+    load();
+  };
+
+  const del = async (id) => {
+    if (!confirm('Delete this project and all its logs?')) return;
+    await db.from('projects').delete().eq('id', id);
+    setDetail(null);
+    notify('Project deleted', 'success');
+    load();
+  };
+
+  const moveStatus = async (proj, newStatus) => {
+    await db.from('projects').update({ status:newStatus, updated_at:new Date().toISOString() }).eq('id', proj.id);
+    notify(`Moved to ${newStatus}`, 'success');
+    load();
+  };
+
+  const addLog = async () => {
+    if (!logText.trim() || !detail) return;
+    await db.from('project_logs').insert([{ project_id:detail.id, content:logText.trim(), log_type:logType }]);
+    await db.from('projects').update({ updated_at:new Date().toISOString() }).eq('id', detail.id);
+    setLogText('');
+    notify('Log saved!', 'success');
+    loadLogs(detail.id);
+  };
+
+  const byStatus = (s) => projects.filter(p => p.status===s);
+
+  const statusColors = { idea:'var(--text-muted)', active:'var(--success)', paused:'var(--warning)', complete:'var(--accent-light)' };
+
+  return (
+    <div className="main">
+      <div className="ph">
+        <div>
+          <div className="ph-title">Projects</div>
+          <div className="ph-sub">{projects.length} total · {byStatus('active').length} active</div>
+        </div>
+        <button className="btn btn-primary" onClick={() => { setForm(PROJ_DEFAULTS); setModal('add'); }}>
+          <Icon name="plus" size={15} /> New Project
+        </button>
+      </div>
+      <div className="pc">
+        <div className="kanban">
+          {STATUSES.map(s => (
+            <div key={s} className="kb-col">
+              <div className="kb-hdr" style={{ borderColor:statusColors[s] }}>
+                <span style={{ color:statusColors[s] }}>{s.charAt(0).toUpperCase()+s.slice(1)}</span>
+                <span style={{ marginLeft:6, fontSize:10, color:'var(--text-dim)' }}>({byStatus(s).length})</span>
+              </div>
+              {byStatus(s).map(p => (
+                <div key={p.id} className="proj-card" onClick={() => openDetail(p)}>
+                  <div className="proj-name">{p.name}</div>
+                  {p.description && <div className="proj-desc">{p.description}</div>}
+                  <div className="flex items-center justify-between mt-8">
+                    <span className={`badge b-${s}`}>{s}</span>
+                    <div className="flex gap-6" onClick={e=>e.stopPropagation()}>
+                      {STATUSES.filter(st=>st!==s).map(st => (
+                        <button key={st} className="btn-xs btn" style={{ background:'var(--surface-2)', border:'1px solid var(--border)', color:'var(--text-muted)', fontSize:10, padding:'2px 6px' }}
+                          onClick={() => moveStatus(p, st)} title={`Move to ${st}`}>→{st.slice(0,2)}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {byStatus(s).length === 0 && (
+                <div style={{ fontSize:12, color:'var(--text-dim)', textAlign:'center', padding:'16px 8px', border:'1px dashed var(--border)', borderRadius:10 }}>
+                  Empty
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {detail && (
+          <div className="detail-panel mt-20">
+            <div className="flex items-center justify-between" style={{ marginBottom:16 }}>
+              <div>
+                <div style={{ fontSize:18, fontWeight:800 }}>{detail.name}</div>
+                <span className={`badge b-${detail.status}`} style={{ marginTop:4 }}>{detail.status}</span>
+              </div>
+              <div className="flex gap-8">
+                <button className="btn btn-ghost btn-sm" onClick={() => { setForm(detail); setModal('edit'); }}><Icon name="edit" size={13} /> Edit</button>
+                <button className="btn btn-danger btn-sm" onClick={() => del(detail.id)}><Icon name="trash" size={13} /></button>
+              </div>
+            </div>
+            {detail.description && <p style={{ fontSize:13, color:'var(--text-muted)', lineHeight:1.6, marginBottom:16 }}>{detail.description}</p>}
+            {detail.notes && (
+              <div style={{ marginBottom:16 }}>
+                <div className="sec-title">Notes</div>
+                <div style={{ fontSize:13, lineHeight:1.6, whiteSpace:'pre-wrap' }}>{detail.notes}</div>
+              </div>
+            )}
+
+            <div className="divider" />
+            <div className="sec-title"><Icon name="log" size={13} style={{ display:'inline' }} /> Work Log</div>
+
+            <div className="flex gap-8 mt-8" style={{ marginBottom:12 }}>
+              <select value={logType} onChange={e=>setLogType(e.target.value)} style={{ width:'auto', minWidth:100, flex:'none' }}>
+                <option value="note">📝 Note</option>
+                <option value="prompt">💬 Prompt</option>
+                <option value="output">✨ Output</option>
+                <option value="update">🔄 Update</option>
+              </select>
+              <textarea value={logText} onChange={e=>setLogText(e.target.value)} placeholder="Log work, save a prompt, record progress…" style={{ flex:1, minHeight:60 }} />
+              <button className="btn btn-primary btn-sm" onClick={addLog} style={{ alignSelf:'flex-end' }}><Icon name="save" size={13} /> Save</button>
+            </div>
+
+            {logs.length === 0 && <div className="text-sm text-muted" style={{ textAlign:'center', padding:'16px 0' }}>No logs yet — save your first entry above</div>}
+            {logs.map(l => (
+              <div key={l.id} className="log-entry">
+                <div className="log-meta">
+                  <span className={`badge b-${l.log_type}`}>{l.log_type}</span>
+                  <span>{new Date(l.created_at).toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' })}</span>
+                </div>
+                <div className="log-content">{l.content}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {modal && (
+        <Modal title={modal==='add'?'New Project':'Edit Project'} onClose={() => setModal(null)}
+          footer={<><button className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button><button className="btn btn-primary" onClick={save} disabled={saving}>{saving?'Saving…':'Save'}</button></>}>
+          <div className="fgrid">
+            <div className="fg"><label className="flabel">Project Name *</label><input value={form.name||''} onChange={e=>setForm(f=>({...f,name:e.target.value}))} placeholder="What are you building?" /></div>
+            <div className="fg">
+              <label className="flabel">Status</label>
+              <select value={form.status||'idea'} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>
+                {STATUSES.map(s=><option key={s} value={s}>{s.charAt(0).toUpperCase()+s.slice(1)}</option>)}
+              </select>
+            </div>
+            <div className="fg"><label className="flabel">Description</label><textarea value={form.description||''} onChange={e=>setForm(f=>({...f,description:e.target.value}))} placeholder="What's this project about?" /></div>
+            <div className="fg"><label className="flabel">Notes</label><textarea value={form.notes||''} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} placeholder="Research, links, ideas, context…" style={{ minHeight:100 }} /></div>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+};
+
+// ─── VAULT VIEW ────────────────────────────────────────
+const VAULT_DEFAULTS = { title:'', content:'', entry_type:'note', project_id:null, tags:[] };
+
+const VaultView = ({ notify }) => {
+  const [entries, setEntries] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [q, setQ] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState(VAULT_DEFAULTS);
+  const [detail, setDetail] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    const [{ data:v }, { data:p }] = await Promise.all([
+      db.from('vault_entries').select('*').order('created_at', { ascending:false }),
+      db.from('projects').select('id,name').order('name'),
+    ]);
+    setEntries(v||[]);
+    setProjects(p||[]);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const filtered = useMemo(() => entries.filter(e => {
+    const matchQ = !q || e.title?.toLowerCase().includes(q.toLowerCase()) || e.content?.toLowerCase().includes(q.toLowerCase());
+    const matchType = typeFilter==='all' || e.entry_type===typeFilter;
+    return matchQ && matchType;
+  }), [entries, q, typeFilter]);
+
+  const save = async () => {
+    if (!form.title.trim()) { notify('Title required', 'error'); return; }
+    setSaving(true);
+    if (!form.id) {
+      await db.from('vault_entries').insert([{ title:form.title, content:form.content, entry_type:form.entry_type, project_id:form.project_id||null }]);
+      notify('Saved to vault!', 'success');
+    } else {
+      await db.from('vault_entries').update({ title:form.title, content:form.content, entry_type:form.entry_type, project_id:form.project_id||null }).eq('id', form.id);
+      notify('Entry updated!', 'success');
+    }
+    setSaving(false);
+    setModal(null);
+    setDetail(null);
+    load();
+  };
+
+  const del = async (id) => {
+    if (!confirm('Delete this entry?')) return;
+    await db.from('vault_entries').delete().eq('id', id);
+    setDetail(null);
+    notify('Entry deleted', 'success');
+    load();
+  };
+
+  const typeEmoji = { note:'📝', prompt:'💬', output:'✨', file:'📎' };
+
+  return (
+    <div className="main">
+      <div className="ph">
+        <div>
+          <div className="ph-title">Vault</div>
+          <div className="ph-sub">{entries.length} entries — your work, saved forever</div>
+        </div>
+        <button className="btn btn-primary" onClick={() => { setForm(VAULT_DEFAULTS); setModal('add'); }}>
+          <Icon name="plus" size={15} /> Save Entry
+        </button>
+      </div>
+      <div className="pc">
+        <div className="flex items-center gap-12" style={{ marginBottom:14 }}>
+          <div className="search-wrap flex-1">
+            <Icon name="search" size={15} />
+            <input placeholder="Search entries…" value={q} onChange={e=>setQ(e.target.value)} />
+          </div>
+          <div className="tab-bar">
+            {['all','note','prompt','output','file'].map(t => (
+              <button key={t} className={`tab ${typeFilter===t?'active':''}`} onClick={()=>setTypeFilter(t)}>
+                {t==='all'?'All':(typeEmoji[t]||'')+' '+t.charAt(0).toUpperCase()+t.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {filtered.length === 0 && (
+          <div className="empty-state">
+            <div className="empty-icon">🔐</div>
+            <div className="empty-title">{q||typeFilter!=='all'?'Nothing found':'Vault is empty'}</div>
+            <div className="text-muted text-sm">Save prompts, notes, and outputs so nothing gets lost</div>
+          </div>
+        )}
+
+        <div className="grid2" style={{ gap:10 }}>
+          {filtered.map(e => (
+            <div key={e.id} className="vault-entry" onClick={() => setDetail(detail?.id===e.id?null:e)}>
+              <div className="flex items-center justify-between" style={{ marginBottom:6 }}>
+                <div className="ve-title">{typeEmoji[e.entry_type]||'📝'} {e.title}</div>
+                <span className={`badge b-${e.entry_type}`}>{e.entry_type}</span>
+              </div>
+              {e.content && <div className="ve-preview">{e.content}</div>}
+              <div className="text-xs text-muted" style={{ marginTop:8 }}>{new Date(e.created_at).toLocaleDateString('en-US',{ month:'short', day:'numeric', year:'numeric' })}</div>
+            </div>
+          ))}
+        </div>
+
+        {detail && (
+          <div className="detail-panel mt-16">
+            <div className="flex items-center justify-between" style={{ marginBottom:14 }}>
+              <div>
+                <div style={{ fontSize:17, fontWeight:800 }}>{typeEmoji[detail.entry_type]} {detail.title}</div>
+                <div className="text-xs text-muted" style={{ marginTop:4 }}>{new Date(detail.created_at).toLocaleString()}</div>
+              </div>
+              <div className="flex gap-8">
+                <button className="btn btn-ghost btn-sm" onClick={() => { setForm(detail); setModal('edit'); }}><Icon name="edit" size={13} /> Edit</button>
+                <button className="btn btn-danger btn-sm" onClick={() => del(detail.id)}><Icon name="trash" size={13} /></button>
+              </div>
+            </div>
+            {detail.content && <div style={{ fontSize:13, lineHeight:1.7, whiteSpace:'pre-wrap', background:'var(--surface-3)', borderRadius:8, padding:'14px 16px' }}>{detail.content}</div>}
+          </div>
+        )}
+      </div>
+
+      {modal && (
+        <Modal title={modal==='add'?'Save to Vault':'Edit Entry'} onClose={() => setModal(null)}
+          footer={<><button className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button><button className="btn btn-primary" onClick={save} disabled={saving}>{saving?'Saving…':'Save to Vault'}</button></>}>
+          <div className="fgrid">
+            <div className="fg"><label className="flabel">Title *</label><input value={form.title||''} onChange={e=>setForm(f=>({...f,title:e.target.value}))} placeholder="Give this entry a name" /></div>
+            <div className="grid2">
+              <div className="fg">
+                <label className="flabel">Type</label>
+                <select value={form.entry_type||'note'} onChange={e=>setForm(f=>({...f,entry_type:e.target.value}))}>
+                  <option value="note">📝 Note</option>
+                  <option value="prompt">💬 Prompt</option>
+                  <option value="output">✨ Output</option>
+                  <option value="file">📎 File / Link</option>
+                </select>
+              </div>
+              <div className="fg">
+                <label className="flabel">Link to Project</label>
+                <select value={form.project_id||''} onChange={e=>setForm(f=>({...f,project_id:e.target.value||null}))}>
+                  <option value="">None</option>
+                  {projects.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="fg"><label className="flabel">Content</label><textarea value={form.content||''} onChange={e=>setForm(f=>({...f,content:e.target.value}))} placeholder="Paste prompts, notes, outputs, links, file paths…" style={{ minHeight:140 }} /></div>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+};
+
+// ─── QUICK SAVE ────────────────────────────────────────
+const QuickSave = ({ notify }) => {
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [type, setType] = useState('note');
+
+  const save = async () => {
+    if (!title.trim()) return;
+    await db.from('vault_entries').insert([{ title:title.trim(), content:content.trim(), entry_type:type }]);
+    setTitle(''); setContent(''); setOpen(false);
+    notify('Saved to vault! ⚡', 'success');
+  };
+
+  if (!open) return (
+    <button className="qs-btn" onClick={() => setOpen(true)}>
+      <Icon name="save" size={15} /> Quick Save
+    </button>
+  );
+
+  return (
+    <div style={{ position:'fixed', bottom:20, left:'calc(var(--sidebar-w) + 20px)', zIndex:500, background:'var(--surface)', border:'1px solid var(--border-light)', borderRadius:14, padding:20, width:360, boxShadow:'0 8px 32px rgba(0,0,0,.5)' }}>
+      <div className="flex items-center justify-between" style={{ marginBottom:14 }}>
+        <span style={{ fontSize:14, fontWeight:800 }}>⚡ Quick Save to Vault</span>
+        <button className="md-close" onClick={() => setOpen(false)}>✕</button>
+      </div>
+      <div className="fgrid">
+        <div className="fg"><input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Title…" /></div>
+        <div className="grid2" style={{ gap:8 }}>
+          <select value={type} onChange={e=>setType(e.target.value)} style={{ fontSize:12 }}>
+            <option value="note">📝 Note</option><option value="prompt">💬 Prompt</option>
+            <option value="output">✨ Output</option><option value="file">📎 File</option>
+          </select>
+          <button className="btn btn-primary btn-sm w-full" onClick={save}>Save</button>
+        </div>
+        <textarea value={content} onChange={e=>setContent(e.target.value)} placeholder="Paste content, prompt, or link…" style={{ minHeight:80 }} />
+      </div>
+    </div>
+  );
+};
+
+// ─── LOGIN VIEW ────────────────────────────────────────
+function LoginView() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    const { error: err } = await db.auth.signInWithPassword({ email, password });
+    if (err) setError(err.message);
+    setLoading(false);
+  };
+
+  return (
+    <div className="login-wrap">
+      <div className="login-box">
+        <div className="login-logo">⚡</div>
+        <div className="login-title">HG Command Center</div>
+        <div className="login-sub">Sign in to access your dashboard</div>
+        {error && <div className="login-err">{error}</div>}
+        <form onSubmit={handleLogin} className="login-gap">
+          <div className="fg">
+            <label className="flabel">Email</label>
+            <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
+              placeholder="your@email.com" required autoFocus />
+          </div>
+          <div className="fg">
+            <label className="flabel">Password</label>
+            <input type="password" value={password} onChange={e=>setPassword(e.target.value)}
+              placeholder="••••••••" required />
+          </div>
+          <button type="submit" className="btn btn-primary" disabled={loading}
+            style={{width:'100%',justifyContent:'center',padding:'11px',fontSize:'14px',marginTop:'4px'}}>
+            {loading ? 'Signing in…' : 'Sign In'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ─── APP ───────────────────────────────────────────────
+function App() {
+  const [view, setView] = useState('home');
+  const [notif, setNotif] = useState(null);
+  const [session, setSession] = useState(undefined); // undefined = loading
+  const notifRef = useRef(null);
+
+  useEffect(() => {
+    db.auth.getSession().then(({ data: { session } }) => setSession(session));
+    const { data: { subscription } } = db.auth.onAuthStateChange((_e, s) => setSession(s));
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const notify = useCallback((msg, type='info') => {
+    if (notifRef.current) clearTimeout(notifRef.current);
+    setNotif({ msg, type });
+    notifRef.current = setTimeout(() => setNotif(null), 3200);
+  }, []);
+
+  const handleLogout = useCallback(async () => {
+    await db.auth.signOut();
+  }, []);
+
+  // Still loading session
+  if (session === undefined) return (
+    <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',background:'var(--bg)',color:'var(--text-muted)',fontSize:'14px'}}>
+      Loading…
+    </div>
+  );
+
+  // Not authenticated
+  if (!session) return <LoginView />;
+
+  return (
+    <>
+      <Sidebar view={view} setView={setView} onLogout={handleLogout} />
+      <div style={{ flex:1, display:'flex', overflow:'hidden' }}>
+        {view==='home' && <HomeView notify={notify} setView={setView} />}
+        {view==='crm' && <CRMView notify={notify} />}
+        {view==='work' && <WorkHubView notify={notify} />}
+        {view==='calendar' && <CalendarView notify={notify} />}
+        {view==='projects' && <ProjectsView notify={notify} />}
+        {view==='vault' && <VaultView notify={notify} />}
+      </div>
+      <QuickSave notify={notify} />
+      {notif && <Notif {...notif} />}
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
